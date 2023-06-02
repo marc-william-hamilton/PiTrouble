@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import subprocess
 import re
 import os
@@ -14,6 +16,7 @@ def check_package():
 
     result = re.search("Status.*", result.stdout)
     if result and result.group(0) != "Status: install ok installed":
+        log("run <sudo apt install net-tools>")
         quit()
 
 
@@ -49,7 +52,8 @@ def wifi_connected(interface):
 
 
 def reconnect_wifi(interface):
-    subprocess.run(["reboot"])
+    subprocess.run(["sudo", "ifconfig", interface, "down"])
+    subprocess.run(["sudo", "ifconfig", interface, "up"])
 
 
 def log(message):
@@ -64,13 +68,13 @@ def main():
     check_package()
     interface = get_interface()
 
-    log(ping())
-
     if not wifi_connected(interface):
         log("Wi-Fi is disconnected. Reconnecting...")
         reconnect_wifi(interface)
     else:
         log("Wi-Fi is connected")
+
+    log(ping())
 
 
 if __name__ == "__main__":

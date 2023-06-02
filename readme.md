@@ -1,16 +1,8 @@
-# Wifi Connector
-
-## Requirements
-
- - Python 3
- - Pip
-
-## Usage
-
- 1. Create necessary environment with  ```./setup.sh```
- 2. Run with ```./run.sh```
+# Raspberry Pi Wifi Troubleshooting
+Requires python3.
+Execution to be scheduled with ```crontab```.
 
 ## Behaviour
-
- - Pings Google.com every 2 minutes.
- - Checks every 10 seconds if Wifi is connected, else restarts network interface.
+ - Checks for successful ping to google.com.
+ - Uses grep to check if some wifi ESSID is present.
+ - If no ESSID found, turn network interface off and on again.
