@@ -1,11 +1,11 @@
 import subprocess
-from time import sleep
 import re
-import schedule
 import os
-from sty import fg
+from datetime import datetime
+
 
 subprocess_options = {"capture_output": True, "text": True}
+logging_file = open("log.txt", "a")
 
 
 def check_package():
@@ -13,11 +13,7 @@ def check_package():
     result = subprocess.run(["dpkg", "-s", "net-tools"], **subprocess_options)
 
     result = re.search("Status.*", result.stdout)
-    if result and result.group(0) == "Status: install ok installed":
-        print(f"* {fg.blue}found net-tools{fg.rs}")
-    else:
-        print(
-            f"net-tools {fg.li_red}not found{fg.rs}, run <sudo apt install net-tools>")
+    if result and result.group(0) != "Status: install ok installed":
         quit()
 
 
@@ -28,7 +24,6 @@ def get_interface():
     result = result.stdout
     result = result[0:result.find(" ")]
 
-    print(f"* {fg.blue}interface is {result}{fg.rs}")
     return result
 
 
@@ -37,9 +32,9 @@ def ping():
     response = os.system(f"ping -qc 1 google.com 2>&1 >/dev/null")
 
     if response == 0:
-        print(f"{fg.li_green}Pinged Google{fg.rs}")
+        return "Pinged Google"
     else:
-        print(f"{fg.li_red}Ping to Google failed{fg.rs}")
+        return "Ping to Google failed"
 
 
 def wifi_connected(interface):
@@ -54,32 +49,28 @@ def wifi_connected(interface):
 
 
 def reconnect_wifi(interface):
-    # Run commands to reconnect to the Wi-Fi network
-    subprocess.run(["sudo", "ifconfig", interface, "down"])
-    subprocess.run(["sudo", "ifconfig", interface, "up"])
+    subprocess.run(["reboot"])
+
+
+def log(message):
+
+    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    logging_file.write(f"{time} {message}\n")
+    logging_file.flush()
 
 
 def main():
     check_package()
     interface = get_interface()
-    print(f"{fg.li_yellow}Press CTRL+C to quit{fg.rs}")
-    ping()
-    schedule.every(2).minutes.do(ping)
 
-    try:
+    log(ping())
 
-        while True:
-            if not wifi_connected(interface):
-                print(f"{fg.li_red}Wi-Fi is disconnected. Reconnecting...{fg.rs}")
-                reconnect_wifi(interface)
-            else:
-                print(f"{fg.li_green}Wi-Fi is connected{fg.rs}")
-
-            # Delay between checks (in seconds)
-            sleep(10)
-
-    except KeyboardInterrupt:
-        print("\nbyeee :)")
+    if not wifi_connected(interface):
+        log("Wi-Fi is disconnected. Reconnecting...")
+        reconnect_wifi(interface)
+    else:
+        log("Wi-Fi is connected")
 
 
 if __name__ == "__main__":
